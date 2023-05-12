@@ -62,6 +62,16 @@ const hijryMonths = [
   },
 ];
 
+const weekdays = {
+  saturday: 'السبت',
+  sunday: 'الأحد',
+  monday: 'الأثنين',
+  tuesday: 'الثلاثاء',
+  wednesday: 'الأربعاء',
+  thursday: 'الخميس',
+  friday: 'الجمعه',
+};
+
 const axiosInstance = axios.create({
   auth: {
     username: process.env.REACT_APP_API_USERNAME,
@@ -126,7 +136,6 @@ function App() {
     emirate: '',
     area: '',
   });
-  const [prayerTimes, setPrayerTimes] = useState(new Array(5).fill(prayerTime));
   const [prayerData, setPrayerData] = useState();
   const [years, setYears] = useState([]);
   const [date, setDate] = useState(null);
@@ -206,9 +215,7 @@ function App() {
     }
   };
 
-  const fetchMoreData = () => {
-    setPrayerTimes((prev) => [...prev, ...new Array(5).fill(prayerTime)]);
-  };
+  const fetchMoreData = () => {};
 
   useEffect(() => {
     function checkScroll(e) {
@@ -232,11 +239,11 @@ function App() {
       <main className="pt-20 max-w-screen-xl mx-auto px-6">
         <div
           id="start"
-          className="relative z-10 max-w-screen-xl flex flex-wrap items-end justify-between mx-auto gap-6 mb-12"
+          className="relative z-10 max-w-screen-xl flex flex-wrap items-end justify-end lg:justify-center mx-auto gap-12 mb-12"
         >
           <div>
             <p className="text-lg font-semibold mb-3 text-end">تصفية حسب الإمارة والمنطقة</p>
-            <div className="flex items-start gap-3">
+            <div className="flex items-end gap-5">
               <div className="flex flex-col gap-1 max-w-max">
                 <label htmlFor="filterBy" className="flex flex-row-reverse items-center gap-2">
                   الإمارة
@@ -291,7 +298,15 @@ function App() {
           </div>
           <div>
             <p className="text-lg font-semibold mb-3 text-end">تصفية حسب السنة والشهر والفترة</p>
-            <div className="flex max-w-max items-start gap-3">
+            <div className="flex max-w-max items-end gap-5">
+              {values.year && (
+                <button
+                  onClick={handleSearchByHijriYear}
+                  className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                >
+                  البحث بالسنة الهجرية
+                </button>
+              )}
               <div className="max-w-max">
                 <label className="mb-1 block text-end w-full">السنة والشهر والفترة</label>
                 <ReactDatePicker
@@ -312,155 +327,124 @@ function App() {
                   className="max-w-max w-full rounded-md"
                 />
               </div>
-              <div className="flex flex-col gap-1 max-w-max block">
-                <label htmlFor="filterBy" className="text-end">
-                  السنة الهجرية
-                </label>
-                <select
-                  name="year"
-                  id="year"
-                  value={values.year}
-                  onChange={handleChange}
-                  className="rounded-md text-end"
-                >
-                  <option value="">اختر السنة</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {values.year && (
+                <div className="flex flex-col gap-1 max-w-max block">
+                  <label htmlFor="filterBy" className="text-end">
+                    السنة الهجرية
+                  </label>
+                  <select
+                    name="year"
+                    id="year"
+                    value={values.year}
+                    onChange={handleChange}
+                    className="rounded-md text-end"
+                  >
+                    <option value="">اختر السنة</option>
+                    {years.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
 
           <div>
             <button
               onClick={handleSearch}
-              className="me-3 rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              // className="mt-6 py-2 px-4 bg-slate-400 text-white rounded-lg block"
+              className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
               يبحث
-            </button>
-            <button
-              onClick={handleSearchByHijriYear}
-              className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              // className="mt-6 py-2 px-4 bg-slate-400 text-white rounded-lg block"
-            >
-              البحث بالسنة الهجرية
             </button>
           </div>
         </div>
 
         <div className="max-w-full w-full overflow-x-auto">
-          <InfiniteScroll
-            dataLength={setPrayerTimes.length}
-            next={fetchMoreData}
-            style={{ display: 'flex', flexDirection: 'column-reverse' }} //To put endMessage and loader to the top.
-            inverse={true} //
-            hasMore={true}
-            loader={<h4>Loading...</h4>}
-            // scrollableTarget="scrollableDiv"
-          >
-            {' '}
-            <table className="w-full">
-              <thead className="border-b bg-gray-300">
+          <table className="w-full" style={{ direction: 'rtl' }}>
+            <thead className="border-b bg-gray-300 border">
+              <tr>
+                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
+                  يوم
+                </th>
+                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
+                  تاريخ
+                </th>
+                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
+                  التاريخ الإسلامي
+                </th>
+                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
+                  فقير
+                </th>
+                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
+                  شروق
+                </th>
+                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
+                  ظهر
+                </th>
+                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
+                  العصر
+                </th>
+                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
+                  المغرب
+                </th>
+                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
+                  العشاء
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {(isLoadingPrayerTimesByAreaID ||
+                isLoadingPrayerTimesByDate ||
+                isLoadingYearlyPrayerTimes ||
+                isRefetchingPrayerTimesByAreaID ||
+                isRefetchingPrayerTimesByDate ||
+                isRefetchingYearlyPrayerTimes) && (
                 <tr>
-                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">يوم</th>
-                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">تاريخ</th>
-                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">
-                    التاريخ الإسلامي
-                  </th>
-                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">فقير</th>
-                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">شروق</th>
-                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">ظهر</th>
-                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">العصر</th>
-                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">المغرب</th>
-                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">العشاء</th>
+                  <td colSpan={9} className="py-3">
+                    <Spinner className="mx-auto" />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {(isLoadingPrayerTimesByAreaID ||
-                  isLoadingPrayerTimesByDate ||
-                  isLoadingYearlyPrayerTimes ||
-                  isRefetchingPrayerTimesByAreaID ||
-                  isRefetchingPrayerTimesByDate ||
-                  isRefetchingYearlyPrayerTimes) && (
-                  <tr>
-                    <td colSpan={9} className="py-3">
-                      <Spinner className="mx-auto" />
-                    </td>
-                  </tr>
-                )}
+              )}
 
-                {prayerTimes.map((prayerData, index) => (
-                  <tr key={index}>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {prayerData.dayofWeek}
+              {(prayerData ? (Array.isArray(prayerData) ? prayerData : [prayerData]) : []).map(
+                (prayerData, index) => (
+                  <tr key={index} className="odd:bg-gray-100">
+                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
+                      {weekdays[prayerData.dayofWeek.trim().toLowerCase()]}
                     </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
                       {moment(prayerData.gDate).format('MM/DD/YYYY')}
                     </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {prayerData.hijryDay} {hijryMonths[prayerData.hijryMonth - 1].ar}{' '}
-                      {prayerData.hijryYear}
+                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
+                      <span>{prayerData.hijryYear}</span>
+                      <span>{hijryMonths[prayerData.hijryMonth - 1].ar}</span>
+                      <span>{prayerData.hijryDay}</span>
                     </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {moment(prayerData.fajr).format('LT')}
+                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
+                      {moment(prayerData.fajr).locale('ar').format('LT')}
                     </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
                       {moment(prayerData.shurooq).format('LT')}
                     </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
                       {moment(prayerData.zuhr).format('LT')}
                     </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
                       {moment(prayerData.asr).format('LT')}
                     </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
                       {moment(prayerData.maghrib).format('LT')}
                     </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
                       {moment(prayerData.isha).format('LT')}
                     </td>
                   </tr>
-                ))}
-
-                {prayerData && (
-                  <tr>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {prayerData.dayofWeek}
-                    </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {moment(prayerData.gDate).format('MM/DD/YYYY')}
-                    </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {prayerData.hijryDay} {hijryMonths[prayerData.hijryMonth - 1].ar}{' '}
-                      {prayerData.hijryYear}
-                    </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {moment(prayerData.fajr).format('LT')}
-                    </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {moment(prayerData.shurooq).format('LT')}
-                    </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {moment(prayerData.zuhr).format('LT')}
-                    </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {moment(prayerData.asr).format('LT')}
-                    </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {moment(prayerData.maghrib).format('LT')}
-                    </td>
-                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
-                      {moment(prayerData.isha).format('LT')}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </InfiniteScroll>
+                )
+              )}
+            </tbody>
+          </table>
         </div>
       </main>
     </div>
