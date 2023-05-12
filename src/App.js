@@ -9,7 +9,6 @@ import { toast } from 'react-hot-toast';
 import Spinner from './components/ui/Spinner/Spinner';
 import momentHijri from 'moment-hijri';
 import Hero from './components/Hero';
-import InfiniteScroll from 'react-infinite-scroll-component';
 
 const hijryMonths = [
   {
