@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import 'date-fns/locale/ar';
 import moment from 'moment/moment';
@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import Spinner from './components/ui/Spinner/Spinner';
 import momentHijri from 'moment-hijri';
 import Hero from './components/Hero';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 const hijryMonths = [
   {
@@ -95,6 +96,28 @@ const getYearlyPrayerTimes = async ({ queryKey }) => {
   return await axiosInstance.get(`GetYearlyPrayerTimes/${year}`);
 };
 
+const prayerTime = {
+  pid: 69245,
+  gDate: '2022-07-06T00:00:00',
+  dayofWeek: 'Wednesday',
+  hijryDay: 7,
+  hijryMonth: 12,
+  hijryYear: 1443,
+  emsak: '2022-07-19T04:19:00',
+  fajr: '2022-07-19T04:19:00',
+  shurooq: '2022-07-19T05:42:00',
+  zuhr: '2022-07-19T12:32:00',
+  asr: '2022-07-19T15:47:00',
+  maghrib: '2022-07-19T19:18:00',
+  isha: '2022-07-19T20:40:00',
+  emirateID: 1,
+  areaID: 11,
+  emirateNameAr: 'أبوظبي',
+  emirateNameEn: 'Abu Dhabi',
+  areaNameAr: 'ليوا',
+  areaNameEn: 'Liwa',
+};
+
 function App() {
   const [values, setValues] = useState({
     filterBy: 'area',
@@ -103,7 +126,9 @@ function App() {
     emirate: '',
     area: '',
   });
+  const [prayerTimes, setPrayerTimes] = useState(new Array(5).fill(prayerTime));
   const [prayerData, setPrayerData] = useState();
+  const [years, setYears] = useState([]);
   const [date, setDate] = useState(null);
   const {
     isLoading: isLoadingEmirates,
@@ -171,179 +196,271 @@ function App() {
     } else if (values.area) {
       const res = await fetchTodayPrayerTimeByAreaID();
       setPrayerData(res.data?.data?.result);
-    } else if (values.filterBy === 'year') {
+    }
+  };
+
+  const handleSearchByHijriYear = async () => {
+    if (values.year) {
       const res = await fetchYearlyPrayerTimes();
       setPrayerData(res.data?.data?.result);
     }
   };
+
+  const fetchMoreData = () => {
+    setPrayerTimes((prev) => [...prev, ...new Array(5).fill(prayerTime)]);
+  };
+
+  useEffect(() => {
+    function checkScroll(e) {
+      const documentHeight = document.body.scrollHeight;
+      const currentScroll = window.scrollY + window.innerHeight;
+
+      if (currentScroll > documentHeight) {
+        fetchMoreData();
+      }
+    }
+    document.addEventListener('scroll', checkScroll);
+
+    return () => document.removeEventListener('scroll', checkScroll);
+  }, []);
 
   return (
     <div>
       <Hero />
 
       {/* Filters */}
-      <div
-        id="start"
-        className="relative z-10 max-w-screen-xl flex flex-wrap items-end justify-between mx-auto gap-6 mb-12 px-6"
-      >
-        <div>
-          <p className="text-lg font-semibold mb-3">Filter by emirate and area</p>
-          <div className="flex items-start gap-3">
-            <div className="flex flex-col gap-1 max-w-max">
-              <label htmlFor="filterBy" className="flex items-center gap-2">
-                Emirate{' '}
-                {(isLoadingEmirates || isFetchingEmirates) && (
-                  <Spinner size="small" className="inline-block" />
-                )}
-              </label>
-              <select
-                name="emirate"
-                id="emirate"
-                value={values.emirate}
-                onChange={handleChange}
-                className="rounded-md text-end"
-              >
-                <option value="">Select emirate</option>
-                {!isLoadingEmirates &&
-                  data?.data?.result?.map(({ emiratesId, emirateName }) => (
-                    <option key={emiratesId} value={emiratesId}>
-                      {emirateName}
+      <main className="pt-20 max-w-screen-xl mx-auto px-6">
+        <div
+          id="start"
+          className="relative z-10 max-w-screen-xl flex flex-wrap items-end justify-between mx-auto gap-6 mb-12"
+        >
+          <div>
+            <p className="text-lg font-semibold mb-3 text-end">تصفية حسب الإمارة والمنطقة</p>
+            <div className="flex items-start gap-3">
+              <div className="flex flex-col gap-1 max-w-max">
+                <label htmlFor="filterBy" className="flex flex-row-reverse items-center gap-2">
+                  الإمارة
+                  {(isLoadingEmirates || isFetchingEmirates) && (
+                    <Spinner size="small" className="inline-block" />
+                  )}
+                </label>
+                <select
+                  name="emirate"
+                  id="emirate"
+                  value={values.emirate}
+                  onChange={handleChange}
+                  className="rounded-md text-end"
+                >
+                  <option value="">اختر الإمارة</option>
+                  {!isLoadingEmirates &&
+                    data?.data?.result?.map(({ emiratesId, emirateName }) => (
+                      <option key={emiratesId} value={emiratesId}>
+                        {emirateName}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1 max-w-max">
+                <label htmlFor="filterBy" className="flex flex-row-reverse items-center gap-2">
+                  منطقة
+                  {(isLoadingAllAreas ||
+                    isLoadingAreas ||
+                    isFetchingAllAreas ||
+                    isFetchingAreas) && <Spinner size="small" className="inline-block" />}
+                </label>
+
+                <select
+                  name="area"
+                  id="area"
+                  value={values.area}
+                  onChange={handleChange}
+                  className="rounded-md text-end max-w-max w-full"
+                >
+                  <option value="1">حدد المنطقة</option>
+                  {(values.emirate ? areas : allAreas)?.data?.result?.map(
+                    ({ cityID, cityName }) => (
+                      <option key={cityID} value={cityID}>
+                        {cityName}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p className="text-lg font-semibold mb-3 text-end">تصفية حسب السنة والشهر والفترة</p>
+            <div className="flex max-w-max items-start gap-3">
+              <div className="max-w-max">
+                <label className="mb-1 block text-end w-full">السنة والشهر والفترة</label>
+                <ReactDatePicker
+                  selected={date}
+                  wrapperClassName="max-w-max"
+                  onChange={(update) => {
+                    const hijriYear = momentHijri(update).format('iYYYY');
+
+                    setYears((prevYears) => [...prevYears, hijriYear]);
+                    setValues((prevValues) => ({
+                      ...prevValues,
+                      year: hijriYear,
+                    }));
+                    setDate(update);
+                  }}
+                  isClearable
+                  locale="ar"
+                  className="max-w-max w-full rounded-md"
+                />
+              </div>
+              <div className="flex flex-col gap-1 max-w-max block">
+                <label htmlFor="filterBy" className="text-end">
+                  السنة الهجرية
+                </label>
+                <select
+                  name="year"
+                  id="year"
+                  value={values.year}
+                  onChange={handleChange}
+                  className="rounded-md text-end"
+                >
+                  <option value="">اختر السنة</option>
+                  {years.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
                     </option>
                   ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1 max-w-max">
-              <label htmlFor="filterBy" className="flex items-center gap-2">
-                Area{' '}
-                {(isLoadingAllAreas || isLoadingAreas || isFetchingAllAreas || isFetchingAreas) && (
-                  <Spinner size="small" className="inline-block" />
-                )}
-              </label>
-
-              <select
-                name="area"
-                id="area"
-                value={values.area}
-                onChange={handleChange}
-                className="rounded-md text-end max-w-max w-full"
-              >
-                <option value="1">Select area</option>
-                {(values.emirate ? areas : allAreas)?.data?.result?.map(({ cityID, cityName }) => (
-                  <option key={cityID} value={cityID}>
-                    {cityName}
-                  </option>
-                ))}
-              </select>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
-        <div>
-          <p className="text-lg font-semibold mb-3">Filter by year, month and period</p>
-          <div className="flex max-w-max items-start gap-3">
-            <div className="flex flex-col gap-1 max-w-max block">
-              <label htmlFor="filterBy">Hijri Year</label>
-              <select
-                name="year"
-                id="year"
-                value={values.year}
-                onChange={handleChange}
-                className="rounded-md text-end"
-              >
-                <option value="">Select year</option>
-                {[1444].map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="max-w-max">
-              <label className="inline-block mb-1">Date and period</label>
-              <ReactDatePicker
-                selected={date}
-                wrapperClassName="max-w-max"
-                // startDate={new Date(`${values.year}-01-01`)}
-                // endDate={new Date(`${values.year}-12-31`)}
-                onChange={(update) => {
-                  setDate(update);
-                }}
-                className="max-w-max w-full rounded-md"
-              />
-            </div>
+
+          <div>
+            <button
+              onClick={handleSearch}
+              className="me-3 rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              // className="mt-6 py-2 px-4 bg-slate-400 text-white rounded-lg block"
+            >
+              يبحث
+            </button>
+            <button
+              onClick={handleSearchByHijriYear}
+              className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              // className="mt-6 py-2 px-4 bg-slate-400 text-white rounded-lg block"
+            >
+              البحث بالسنة الهجرية
+            </button>
           </div>
         </div>
 
-        <button
-          onClick={handleSearch}
-          className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          // className="mt-6 py-2 px-4 bg-slate-400 text-white rounded-lg block"
-        >
-          Search
-        </button>
-      </div>
-
-      <main className="pb-20 max-w-screen-xl mx-auto px-6">
         <div className="max-w-full w-full overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b">
-              <tr>
-                <th className="py-2 px-3 whitespace-nowrap font-semibold">Day</th>
-                <th className="py-2 px-3 whitespace-nowrap font-semibold">Date</th>
-                <th className="py-2 px-3 whitespace-nowrap font-semibold">Islamic Date</th>
-                <th className="py-2 px-3 whitespace-nowrap font-semibold">Fakjir</th>
-                <th className="py-2 px-3 whitespace-nowrap font-semibold">Shurooq</th>
-                <th className="py-2 px-3 whitespace-nowrap font-semibold">Zuhr</th>
-                <th className="py-2 px-3 whitespace-nowrap font-semibold">Asr</th>
-                <th className="py-2 px-3 whitespace-nowrap font-semibold">Maghrib</th>
-                <th className="py-2 px-3 whitespace-nowrap font-semibold">Isha</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(isLoadingPrayerTimesByAreaID ||
-                isLoadingPrayerTimesByDate ||
-                isLoadingYearlyPrayerTimes ||
-                isRefetchingPrayerTimesByAreaID ||
-                isRefetchingPrayerTimesByDate ||
-                isRefetchingYearlyPrayerTimes) && (
+          <InfiniteScroll
+            dataLength={setPrayerTimes.length}
+            next={fetchMoreData}
+            style={{ display: 'flex', flexDirection: 'column-reverse' }} //To put endMessage and loader to the top.
+            inverse={true} //
+            hasMore={true}
+            loader={<h4>Loading...</h4>}
+            // scrollableTarget="scrollableDiv"
+          >
+            {' '}
+            <table className="w-full">
+              <thead className="border-b bg-gray-300">
                 <tr>
-                  <td colSpan={9} className="py-3">
-                    <Spinner className="mx-auto" />
-                  </td>
+                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">يوم</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">تاريخ</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">
+                    التاريخ الإسلامي
+                  </th>
+                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">فقير</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">شروق</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">ظهر</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">العصر</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">المغرب</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-semibold text-end">العشاء</th>
                 </tr>
-              )}
-              {prayerData && (
-                <tr>
-                  <td className="py-2 px-3 whitespace-nowrap">{prayerData.dayofWeek}</td>
-                  <td className="py-2 px-3 whitespace-nowrap">
-                    {moment(prayerData.gDate).format('MM/DD/YYYY')}
-                  </td>
-                  <td className="py-2 px-3 whitespace-nowrap">
-                    {prayerData.hijryDay} {hijryMonths[prayerData.hijryMonth - 1].ar}{' '}
-                    {prayerData.hijryYear}
-                  </td>
-                  <td className="py-2 px-3 whitespace-nowrap">
-                    {moment(prayerData.fajr).format('LT')}
-                  </td>
-                  <td className="py-2 px-3 whitespace-nowrap">
-                    {moment(prayerData.shurooq).format('LT')}
-                  </td>
-                  <td className="py-2 px-3 whitespace-nowrap">
-                    {moment(prayerData.zuhr).format('LT')}
-                  </td>
-                  <td className="py-2 px-3 whitespace-nowrap">
-                    {moment(prayerData.asr).format('LT')}
-                  </td>
-                  <td className="py-2 px-3 whitespace-nowrap">
-                    {moment(prayerData.maghrib).format('LT')}
-                  </td>
-                  <td className="py-2 px-3 whitespace-nowrap">
-                    {moment(prayerData.isha).format('LT')}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(isLoadingPrayerTimesByAreaID ||
+                  isLoadingPrayerTimesByDate ||
+                  isLoadingYearlyPrayerTimes ||
+                  isRefetchingPrayerTimesByAreaID ||
+                  isRefetchingPrayerTimesByDate ||
+                  isRefetchingYearlyPrayerTimes) && (
+                  <tr>
+                    <td colSpan={9} className="py-3">
+                      <Spinner className="mx-auto" />
+                    </td>
+                  </tr>
+                )}
+
+                {prayerTimes.map((prayerData, index) => (
+                  <tr key={index}>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {prayerData.dayofWeek}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.gDate).format('MM/DD/YYYY')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {prayerData.hijryDay} {hijryMonths[prayerData.hijryMonth - 1].ar}{' '}
+                      {prayerData.hijryYear}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.fajr).format('LT')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.shurooq).format('LT')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.zuhr).format('LT')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.asr).format('LT')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.maghrib).format('LT')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.isha).format('LT')}
+                    </td>
+                  </tr>
+                ))}
+
+                {prayerData && (
+                  <tr>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {prayerData.dayofWeek}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.gDate).format('MM/DD/YYYY')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {prayerData.hijryDay} {hijryMonths[prayerData.hijryMonth - 1].ar}{' '}
+                      {prayerData.hijryYear}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.fajr).format('LT')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.shurooq).format('LT')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.zuhr).format('LT')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.asr).format('LT')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.maghrib).format('LT')}
+                    </td>
+                    <td className="border-b py-3 px-3 whitespace-nowrap text-end">
+                      {moment(prayerData.isha).format('LT')}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </InfiniteScroll>
         </div>
       </main>
     </div>
