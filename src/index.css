@@ -11,4 +11,10 @@
   body {
     @apply font-poppins;
   }
+  select {
+    background-position: left theme('spacing.2') center;
+    padding-left: theme('spacing.10');
+    padding-right: theme('spacing.3');
+    direction: rtl;
+  }
 }

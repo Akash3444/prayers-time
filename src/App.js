@@ -9,67 +9,7 @@ import { toast } from 'react-hot-toast';
 import Spinner from './components/ui/Spinner/Spinner';
 import momentHijri from 'moment-hijri';
 import Hero from './components/Hero';
-
-const hijryMonths = [
-  {
-    ar: ' جمادى الاول',
-    en: 'JamadAlAwal',
-  },
-  {
-    ar: 'جمادى الثانى',
-    en: 'JamadAlThani',
-  },
-  {
-    ar: 'رجب',
-    en: 'Rajab',
-  },
-  {
-    ar: 'شعبان',
-    en: 'Shaban',
-  },
-  {
-    ar: 'رمضان',
-    en: 'Ramadhan',
-  },
-  {
-    ar: 'شوال',
-    en: 'Shawal',
-  },
-  {
-    ar: 'ذى القعدة',
-    en: 'ZelQad',
-  },
-  {
-    ar: 'ذى الحجة',
-    en: 'ZelHaj',
-  },
-  {
-    ar: 'محرم',
-    en: 'Moharram',
-  },
-  {
-    ar: 'صفر',
-    en: 'Safar',
-  },
-  {
-    ar: 'ربيع الاول',
-    en: 'RabiAlAwal',
-  },
-  {
-    ar: 'ربيع الثانى',
-    en: 'RabiAlThani',
-  },
-];
-
-const weekdays = {
-  saturday: 'السبت',
-  sunday: 'الأحد',
-  monday: 'الأثنين',
-  tuesday: 'الثلاثاء',
-  wednesday: 'الأربعاء',
-  thursday: 'الخميس',
-  friday: 'الجمعه',
-};
+import { hijryMonths, weekdays } from './utils/constants';
 
 const axiosInstance = axios.create({
   auth: {
@@ -190,6 +130,14 @@ function App() {
     enabled: false,
   });
 
+  const isLoadingPrayerData =
+    isLoadingPrayerTimesByAreaID ||
+    isLoadingPrayerTimesByDate ||
+    isLoadingYearlyPrayerTimes ||
+    isRefetchingPrayerTimesByAreaID ||
+    isRefetchingPrayerTimesByDate ||
+    isRefetchingYearlyPrayerTimes;
+
   const handleChange = ({ target: { name, value } }) => {
     setValues((prevValues) => ({
       ...prevValues,
@@ -235,15 +183,15 @@ function App() {
       <Hero />
 
       {/* Filters */}
-      <main className="pt-20 max-w-screen-xl mx-auto px-6">
+      <main className="my-12 max-w-screen-xl mx-auto px-6">
         <div
           id="start"
-          className="relative z-10 max-w-screen-xl flex flex-wrap items-end justify-end lg:justify-center mx-auto gap-12 mb-12"
+          className="relative z-10 max-w-screen-xl flex flex-wrap items-end justify-end lg:justify-center bg-slate-200 rounded-md p-3 sm:p-6 mx-auto gap-12 mb-12"
         >
-          <div>
+          <div className="w-full sm:w-auto">
             <p className="text-lg font-semibold mb-3 text-end">تصفية حسب الإمارة والمنطقة</p>
-            <div className="flex items-end gap-5">
-              <div className="flex flex-col gap-1 max-w-max">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-end gap-5">
+              <div className="flex flex-col gap-1 flex-1 sm:max-w-max">
                 <label htmlFor="filterBy" className="flex flex-row-reverse items-center gap-2">
                   الإمارة
                   {(isLoadingEmirates || isFetchingEmirates) && (
@@ -255,7 +203,7 @@ function App() {
                   id="emirate"
                   value={values.emirate}
                   onChange={handleChange}
-                  className="rounded-md text-end"
+                  className="rounded-md"
                 >
                   <option value="">اختر الإمارة</option>
                   {!isLoadingEmirates &&
@@ -267,7 +215,7 @@ function App() {
                 </select>
               </div>
 
-              <div className="flex flex-col gap-1 max-w-max">
+              <div className="flex flex-col gap-1 flex-1 sm:max-w-max">
                 <label htmlFor="filterBy" className="flex flex-row-reverse items-center gap-2">
                   منطقة
                   {(isLoadingAllAreas ||
@@ -281,9 +229,9 @@ function App() {
                   id="area"
                   value={values.area}
                   onChange={handleChange}
-                  className="rounded-md text-end max-w-max w-full"
+                  className="rounded-md max-w-full sm:max-w-max w-full"
                 >
-                  <option value="1">حدد المنطقة</option>
+                  <option value="">حدد المنطقة</option>
                   {(values.emirate ? areas : allAreas)?.data?.result?.map(
                     ({ cityID, cityName }) => (
                       <option key={cityID} value={cityID}>
@@ -295,26 +243,26 @@ function App() {
               </div>
             </div>
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <p className="text-lg font-semibold mb-3 text-end">تصفية حسب السنة والشهر والفترة</p>
-            <div className="flex max-w-max items-end gap-5">
+            <div className="flex flex-col sm:flex-row w-full sm:max-w-max sm:items-end sm:ms-auto gap-5">
               {values.year && (
                 <button
                   onClick={handleSearchByHijriYear}
-                  className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  className="order-last sm:order-first rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
                   البحث بالسنة الهجرية
                 </button>
               )}
-              <div className="max-w-max">
+              <div className="w-full sm:max-w-max">
                 <label className="mb-1 block text-end w-full">السنة والشهر والفترة</label>
                 <ReactDatePicker
                   selected={date}
-                  wrapperClassName="max-w-max"
+                  wrapperClassName="w-full sm:max-w-max"
                   onChange={(update) => {
                     const hijriYear = momentHijri(update).format('iYYYY');
 
-                    setYears((prevYears) => [...prevYears, hijriYear]);
+                    setYears(() => [hijriYear]);
                     setValues((prevValues) => ({
                       ...prevValues,
                       year: hijriYear,
@@ -322,12 +270,11 @@ function App() {
                     setDate(update);
                   }}
                   isClearable
-                  locale="ar"
-                  className="max-w-max w-full rounded-md"
+                  className="w-full rounded-md"
                 />
               </div>
               {values.year && (
-                <div className="flex flex-col gap-1 max-w-max block">
+                <div className="flex flex-col gap-1 sm:max-w-max">
                   <label htmlFor="filterBy" className="text-end">
                     السنة الهجرية
                   </label>
@@ -336,7 +283,8 @@ function App() {
                     id="year"
                     value={values.year}
                     onChange={handleChange}
-                    className="rounded-md text-end"
+                    className="rounded-md"
+                    disabled
                   >
                     <option value="">اختر السنة</option>
                     {years.map((year) => (
@@ -350,10 +298,10 @@ function App() {
             </div>
           </div>
 
-          <div>
+          <div className="w-full sm:w-auto">
             <button
               onClick={handleSearch}
-              className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="block w-full sm:inline rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
               يبحث
             </button>
@@ -361,45 +309,24 @@ function App() {
         </div>
 
         <div className="max-w-full w-full overflow-x-auto">
-          <table className="w-full" style={{ direction: 'rtl' }}>
+          <table className="w-full border" style={{ direction: 'rtl' }}>
             <thead className="border-b bg-gray-300 border">
               <tr>
-                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
-                  يوم
-                </th>
-                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
-                  تاريخ
-                </th>
-                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
+                <th className="border p-3 whitespace-nowrap font-semibold text-center">يوم</th>
+                <th className="border p-3 whitespace-nowrap font-semibold text-center">تاريخ</th>
+                <th className="border p-3 whitespace-nowrap font-semibold text-center">
                   التاريخ الإسلامي
                 </th>
-                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
-                  فقير
-                </th>
-                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
-                  شروق
-                </th>
-                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
-                  ظهر
-                </th>
-                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
-                  العصر
-                </th>
-                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
-                  المغرب
-                </th>
-                <th className="border py-3 px-3 whitespace-nowrap font-semibold text-center">
-                  العشاء
-                </th>
+                <th className="border p-3 whitespace-nowrap font-semibold text-center">فقير</th>
+                <th className="border p-3 whitespace-nowrap font-semibold text-center">شروق</th>
+                <th className="border p-3 whitespace-nowrap font-semibold text-center">ظهر</th>
+                <th className="border p-3 whitespace-nowrap font-semibold text-center">العصر</th>
+                <th className="border p-3 whitespace-nowrap font-semibold text-center">المغرب</th>
+                <th className="border p-3 whitespace-nowrap font-semibold text-center">العشاء</th>
               </tr>
             </thead>
             <tbody>
-              {(isLoadingPrayerTimesByAreaID ||
-                isLoadingPrayerTimesByDate ||
-                isLoadingYearlyPrayerTimes ||
-                isRefetchingPrayerTimesByAreaID ||
-                isRefetchingPrayerTimesByDate ||
-                isRefetchingYearlyPrayerTimes) && (
+              {isLoadingPrayerData && (
                 <tr>
                   <td colSpan={9} className="py-3">
                     <Spinner className="mx-auto" />
@@ -407,41 +334,52 @@ function App() {
                 </tr>
               )}
 
-              {(prayerData ? (Array.isArray(prayerData) ? prayerData : [prayerData]) : []).map(
-                (prayerData, index) => (
-                  <tr key={index} className="odd:bg-gray-100">
-                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
-                      {weekdays[prayerData.dayofWeek.trim().toLowerCase()]}
-                    </td>
-                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
-                      {moment(prayerData.gDate).format('MM/DD/YYYY')}
-                    </td>
-                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
-                      <span>{prayerData.hijryYear}</span>
-                      <span>{hijryMonths[prayerData.hijryMonth - 1].ar}</span>
-                      <span>{prayerData.hijryDay}</span>
-                    </td>
-                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
-                      {moment(prayerData.fajr).locale('ar').format('LT')}
-                    </td>
-                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
-                      {moment(prayerData.shurooq).format('LT')}
-                    </td>
-                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
-                      {moment(prayerData.zuhr).format('LT')}
-                    </td>
-                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
-                      {moment(prayerData.asr).format('LT')}
-                    </td>
-                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
-                      {moment(prayerData.maghrib).format('LT')}
-                    </td>
-                    <td className="border-b border py-3 px-3 whitespace-nowrap text-center">
-                      {moment(prayerData.isha).format('LT')}
+              {!isLoadingPrayerData &&
+                (prayerData ? (Array.isArray(prayerData) ? prayerData : [prayerData]) : []).map(
+                  (prayerData, index) => (
+                    <tr key={index} className="odd:bg-gray-100">
+                      <td className="border-b border p-3 whitespace-nowrap text-center">
+                        {weekdays[prayerData.dayofWeek.trim().toLowerCase()]}
+                      </td>
+                      <td className="border-b border p-3 whitespace-nowrap text-center">
+                        {moment(prayerData.gDate).format('MM/DD/YYYY')}
+                      </td>
+                      <td className="border-b border p-3 whitespace-nowrap text-center">
+                        <span>{prayerData.hijryYear}</span>
+                        <span>{hijryMonths[prayerData.hijryMonth - 1].ar}</span>
+                        <span>{prayerData.hijryDay}</span>
+                      </td>
+                      <td className="border-b border p-3 whitespace-nowrap text-center">
+                        {moment(prayerData.fajr).locale('ar').format('LT')}
+                      </td>
+                      <td className="border-b border p-3 whitespace-nowrap text-center">
+                        {moment(prayerData.shurooq).format('LT')}
+                      </td>
+                      <td className="border-b border p-3 whitespace-nowrap text-center">
+                        {moment(prayerData.zuhr).format('LT')}
+                      </td>
+                      <td className="border-b border p-3 whitespace-nowrap text-center">
+                        {moment(prayerData.asr).format('LT')}
+                      </td>
+                      <td className="border-b border p-3 whitespace-nowrap text-center">
+                        {moment(prayerData.maghrib).format('LT')}
+                      </td>
+                      <td className="border-b border p-3 whitespace-nowrap text-center">
+                        {moment(prayerData.isha).format('LT')}
+                      </td>
+                    </tr>
+                  )
+                )}
+
+              {!isLoadingPrayerData &&
+                (prayerData ? (Array.isArray(prayerData) ? prayerData : [prayerData]) : [])
+                  .length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="p-3 text-center">
+                      لا نتائج
                     </td>
                   </tr>
-                )
-              )}
+                )}
             </tbody>
           </table>
         </div>
