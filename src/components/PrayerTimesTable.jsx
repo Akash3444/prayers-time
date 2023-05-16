@@ -4,7 +4,7 @@ import { hijryMonths, weekdays } from '../utils/constants';
 import Spinner from './ui/Spinner/Spinner';
 import { axiosInstance } from '../utils/helpers';
 
-const tabs = ['غداً', '7 أيام', 'شهر واحد'];
+const tabs = ['غداً', '7 أيام', '30 يوما'];
 const getTodayPrayerTimeByDate = async ({ areaId, date }) => {
   return await axiosInstance.get(`GetPrayerTimeByDate/${areaId}/${date}`);
 };
@@ -26,12 +26,10 @@ const PrayerTimesTable = ({
     handleTabChange(selectedTab);
   }, [areaId]);
 
-  const getLastFewDaysData = async (days) => {
-    const dates = new Array(days).fill(1).map((_, index) =>
-      moment(date)
-        .subtract(days - index, 'd')
-        .format('YYYY-DD-MM')
-    );
+  const getFutureDaysData = async (days) => {
+    const dates = new Array(days)
+      .fill(1)
+      .map((_, index) => moment().add(index, 'day').format('YYYY-MM-DD'));
     setIsLoading(true);
     try {
       const data = await Promise.all(
@@ -60,7 +58,7 @@ const PrayerTimesTable = ({
       try {
         const res = await getTodayPrayerTimeByDate({
           areaId,
-          date: moment().add(1, 'd').format('YYYY-DD-MM'),
+          date: moment().add(1, 'd').format('YYYY-MM-DD'),
         });
         setPrayerData(res.data?.result);
       } catch (error) {
@@ -69,8 +67,8 @@ const PrayerTimesTable = ({
         setIsLoading(false);
       }
     }
-    if (tab === 1) getLastFewDaysData(7);
-    if (tab === 2) getLastFewDaysData(30);
+    if (tab === 1) getFutureDaysData(7);
+    if (tab === 2) getFutureDaysData(30);
   };
 
   return (

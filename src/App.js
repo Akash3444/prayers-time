@@ -49,7 +49,7 @@ function App() {
   const [isLoadingMorePrayers, setIsLoadingMorePrayers] = useState(false);
   const [pageSize, setPageSize] = useState(5);
   const [date, setDate] = useState(null);
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [selectedTab, setSelectedTab] = useState();
   const {
     isLoading: isLoadingEmirates,
     isFetching: isFetchingEmirates,
@@ -79,13 +79,15 @@ function App() {
     isLoading: isLoadingPrayerTimesByDate,
     isRefetching: isRefetchingPrayerTimesByDate,
   } = useQuery(
-    ['todayPrayerTimeByDate', { areaId: values.area, date: moment(date).format('YYYY-DD-MM') }],
+    ['todayPrayerTimeByDate', { areaId: values.area, date: moment(date).format('YYYY-MM-DD') }],
     getTodayPrayerTimeByDate,
     {
       retry: false,
       enabled: false,
       onError: (error) => {
-        Object.values(error.response.data.errors).forEach((error) => toast.error(error));
+        if (error.response.data.errors)
+          Object.values(error.response.data.errors).forEach((error) => toast.error(error));
+        if (error.response.data.message) toast.error(error.response.data.message);
       },
     }
   );
@@ -106,6 +108,13 @@ function App() {
     enabled: false,
   });
 
+  const selectedAreaName = (allAreas || areas)?.data?.result?.find(
+    ({ cityID }) => cityID === +values.area
+  )?.cityName;
+  const selectedEmirateName = data?.data?.result?.find(
+    ({ emiratesId }) => emiratesId === +values.emirate
+  )?.emirateName;
+
   const isLoadingPrayerData =
     isLoadingPrayerTimesByAreaID ||
     isLoadingPrayerTimesByDate ||
@@ -125,7 +134,7 @@ function App() {
     if (values.area && date) {
       setSelectedTab(-1);
       const res = await fetchTodayPrayerTimeByDate();
-      setPrayerData(res.data?.data?.result);
+      if (!res.error) setPrayerData(res.data?.data?.result);
     } else if (values.area) {
       setSelectedTab(-1);
       const res = await fetchTodayPrayerTimeByAreaID();
@@ -142,7 +151,7 @@ function App() {
   };
 
   const fetchMoreData = useCallback(() => {
-    if (prayerData?.length >= pageSize + 5 && !isLoadingMorePrayers) {
+    if (prayerData?.length > pageSize && !isLoadingMorePrayers) {
       setIsLoadingMorePrayers(true);
       setTimeout(() => {
         setPageSize((prev) => prev + 5);
@@ -196,7 +205,13 @@ function App() {
           values={values}
         />
 
-        {!!values.area && <TodayPrayerTimes areaId={values.area} />}
+        {!!values.area && (
+          <TodayPrayerTimes
+            areaId={values.area}
+            area={selectedAreaName}
+            emirate={selectedEmirateName}
+          />
+        )}
 
         <PrayerTimesTable
           isLoadingMorePrayers={isLoadingMorePrayers}
