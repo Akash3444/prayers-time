@@ -120,7 +120,7 @@ const PrayerTimesTable = ({
                   {weekdays[prayerData.dayofWeek.trim().toLowerCase()]}
                 </td>
                 <td className="border-b border p-3 whitespace-nowrap text-center">
-                  {moment(prayerData.gDate).format('MM/DD/YYYY')}
+                  {moment(prayerData.gDate).format('DD/MM/YYYY')}
                 </td>
                 <td className="border-b border p-3 whitespace-nowrap text-center">
                   <span>{prayerData.hijryYear}</span>

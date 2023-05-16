@@ -101,6 +101,7 @@ const Filters = ({
             <ReactDatePicker
               selected={date}
               wrapperClassName="w-full xl:max-w-max"
+              dateFormat="dd/MM/yyyy"
               onChange={(update) => {
                 const hijriYear = momentHijri(update).format('iYYYY');
 
