@@ -13,7 +13,7 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
-      <Toaster />
+      <Toaster toastOptions={{ error: { className: 'toast-error' } }} />
     </QueryClientProvider>
   </React.StrictMode>
 );

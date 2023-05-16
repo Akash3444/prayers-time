@@ -85,9 +85,14 @@ function App() {
       retry: false,
       enabled: false,
       onError: (error) => {
-        if (error.response.data.errors)
+        if (error.response.data.errors) {
           Object.values(error.response.data.errors).forEach((error) => toast.error(error));
-        if (error.response.data.message) toast.error(error.response.data.message);
+          setPrayerData([]);
+        }
+        if (error.response.data.message) {
+          toast.error(error.response.data.message);
+          setPrayerData([]);
+        }
       },
     }
   );

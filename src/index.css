@@ -18,3 +18,7 @@
     direction: rtl;
   }
 }
+
+.toast-error {
+  @apply !bg-red-100 text-sm;
+}
