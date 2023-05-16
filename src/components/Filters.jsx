@@ -79,15 +79,7 @@ const Filters = ({
       <div className="w-full xl:w-auto">
         <p className="text-lg font-semibold mb-3 text-end">تصفية حسب السنة والشهر والفترة</p>
         <div className="flex flex-col sm:flex-row w-full xl:max-w-max sm:items-end xl:ms-auto gap-5">
-          {values.year && (
-            <button
-              onClick={handleSearchByHijriYear}
-              className="order-last sm:order-first whitespace-nowrap rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              البحث بالسنة الهجرية
-            </button>
-          )}
-          <div className="w-full xl:max-w-max">
+          <div className="sm:order-last w-full xl:max-w-max">
             <label className="mb-1 block text-end w-full">السنة والشهر والفترة</label>
             <ReactDatePicker
               selected={date}
@@ -110,6 +102,7 @@ const Filters = ({
               className="w-full rounded-md"
             />
           </div>
+
           {values.year && (
             <div className="flex flex-col gap-1 xl:max-w-max">
               <label htmlFor="filterBy" className="text-end">
@@ -132,6 +125,14 @@ const Filters = ({
                 ))}
               </select>
             </div>
+          )}
+          {values.year && (
+            <button
+              onClick={handleSearchByHijriYear}
+              className="sm:order-first whitespace-nowrap rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              البحث بالسنة الهجرية
+            </button>
           )}
         </div>
       </div>
